@@ -1,0 +1,7 @@
+.vscode/
+__pycache__
+logs/
+output/
+mavlink_stats.py
+mavlink_analysis.py
+mavlinksensordata.py

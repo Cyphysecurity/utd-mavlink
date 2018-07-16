@@ -791,6 +791,12 @@ fields.SET_MODE_target_system = ProtoField.uint8("mavlink.set_mode.target_system
 fields.SET_MODE_base_mode = ProtoField.uint8("mavlink.set_mode.base_mode", "Base mode", base.DEC, mavlinkMode)
 fields.SET_MODE_custom_mode = ProtoField.uint32("mavlink.set_mode.custom_mode", "Custom mode", base.DEC_HEX)
 
+-- Fields for message type 20: PARAM_REQUEST_READ
+fields.PARAM_REQUEST_READ_target_system = ProtoField.uint8("mavlink.param_request_read.target_system", "System ID", base.HEX)
+fields.PARAM_REQUEST_READ_target_component = ProtoField.uint8("mavlink_proto.param_request_read.target_component", "Component ID", base.HEX, mavlinkCompId)
+fields.PARAM_REQUEST_READ_param_id = ProtoField.string("mavlink.param_request_read.param_id", "Parameter ID", base.ASCII)
+fields.PARAM_REQUEST_READ_param_index = ProtoField.int16("mavlink.param_request_read.param_index", "Parameter index", base.DEC)
+
 -- Fields for message type 21: PARAM_REQUEST_LIST
 fields.PARAM_REQUEST_LIST_target_system = ProtoField.uint8("mavlink_proto.param_request_list.target_system", "System ID", base.HEX)
 fields.PARAM_REQUEST_LIST_target_component = ProtoField.uint8("mavlink_proto.param_request_list.target_component", "Component ID", base.HEX, mavlinkCompId)
@@ -891,6 +897,9 @@ fields.MISSION_ITEM_x = ProtoField.float("mavlink.mission_item.x", "X position /
 fields.MISSION_ITEM_y = ProtoField.float("mavlink.mission_item.y", "Y position / Longitude", base.DEC)
 fields.MISSION_ITEM_z = ProtoField.float("mavlink.mission_item.z", "Z position / Altitude", base.DEC)
 fields.MISSION_ITEM_mission_type = ProtoField.uint8("mavlink.mission_item.mission_type", "Mission type", base.DEC, mavlinkMissionType)
+
+-- Fields for message type 42: MISSION_CURRENT
+fields.MISSION_CURRENT_seq = ProtoField.uint16("mavlink.mission_current.seq", "Sequence", base.DEC)
 
 -- Fields for message type 43: MISSION_REQUEST_LIST
 fields.MISSION_REQUEST_LIST_target_system = ProtoField.uint8("mavlink.mission_request_list.target_system", "System ID", base.DEC_HEX)
@@ -1024,6 +1033,34 @@ fields.ATTITUDE_TARGET_body_roll_rate = ProtoField.float("mavlink.attitude_targe
 fields.ATTITUDE_TARGET_body_pitch_rate = ProtoField.float("mavlink.attitude_target.body_pitch_rate", "Body pitch rate [rad/s]", base.DEC)
 fields.ATTITUDE_TARGET_body_yaw_rate = ProtoField.float("mavlink.attitude_target.body_yaw_rate", "Body yaw rate [rad/s]", base.DEC)
 fields.ATTITUDE_TARGET_thrust = ProtoField.float("mavlink.attitude_target.thrust", "Collective thrust [normalized]", base.DEC)
+
+-- Fields for message type 85: POSITION_TARGET_LOCAL_NED
+fields.POSITION_TARGET_LOCAL_NED_time_boot_ms = ProtoField.uint32("mavlink.position_target_local_ned.time_boot_ms", "Timestamp [ms]", base.DEC)
+fields.POSITION_TARGET_LOCAL_NED_coordinate_frame = ProtoField.uint8("mavlink.position_target_local_ned.coordinate_frame", "Coordinate frame", base.DEC, mavlinkFrame)
+fields.POSITION_TARGET_LOCAL_NED_type_mask = ProtoField.uint16("mavlink.position_target_local_ned.type_mask", "Type mask", base.HEX)
+fields.POSITION_TARGET_LOCAL_NED_type_mask_x = ProtoField.uint16("mavlink.position_target_local_ned.type_mask.x", "X position", base.HEX, nil, 0x0001)
+fields.POSITION_TARGET_LOCAL_NED_type_mask_y = ProtoField.uint16("mavlink.position_target_local_ned.type_mask.y", "Y position", base.HEX, nil, 0x0002)
+fields.POSITION_TARGET_LOCAL_NED_type_mask_z = ProtoField.uint16("mavlink.position_target_local_ned.type_mask.z", "Z position", base.HEX, nil, 0x0004)
+fields.POSITION_TARGET_LOCAL_NED_type_mask_vx = ProtoField.uint16("mavlink.position_target_local_ned.type_mask.vx", "X velocity", base.HEX, nil, 0x0008)
+fields.POSITION_TARGET_LOCAL_NED_type_mask_vy = ProtoField.uint16("mavlink.position_target_local_ned.type_mask.vy", "Y velocity", base.HEX, nil, 0x0010)
+fields.POSITION_TARGET_LOCAL_NED_type_mask_vz = ProtoField.uint16("mavlink.position_target_local_ned.type_mask.vz", "Z velocity", base.HEX, nil, 0x0020)
+fields.POSITION_TARGET_LOCAL_NED_type_mask_ax = ProtoField.uint16("mavlink.position_target_local_ned.type_mask.ax", "X acceleration", base.HEX, nil, 0x0040)
+fields.POSITION_TARGET_LOCAL_NED_type_mask_ay = ProtoField.uint16("mavlink.position_target_local_ned.type_mask.ay", "Y acceleration", base.HEX, nil, 0x0080)
+fields.POSITION_TARGET_LOCAL_NED_type_mask_az = ProtoField.uint16("mavlink.position_target_local_ned.type_mask.az", "Z acceleration", base.HEX, nil, 0x0100)
+fields.POSITION_TARGET_LOCAL_NED_type_mask_fsp = ProtoField.uint16("mavlink.position_target_local_ned.type_mask.fsp", "Force setpoint", base.HEX, nil, 0x0200)
+fields.POSITION_TARGET_LOCAL_NED_type_mask_yaw = ProtoField.uint16("mavlink.position_target_local_ned.type_mask.yaw", "Yaw", base.HEX, nil, 0x0400)
+fields.POSITION_TARGET_LOCAL_NED_type_mask_yaw_rate = ProtoField.uint16("mavlink.position_target_local_ned.type_mask.yaw_rate", "yaw_rate", base.HEX, nil, 0x0800)
+fields.POSITION_TARGET_LOCAL_NED_x = ProtoField.float("mavlink.position_target_local_ned.x", "X position [m]", base.DEC)
+fields.POSITION_TARGET_LOCAL_NED_y = ProtoField.float("mavlink.position_target_local_ned.y", "Y position [m]", base.DEC)
+fields.POSITION_TARGET_LOCAL_NED_z = ProtoField.float("mavlink.position_target_local_ned.z", "Z position [m]", base.DEC)
+fields.POSITION_TARGET_LOCAL_NED_vx = ProtoField.float("mavlink.position_target_local_ned.vx", "X velocity [m/s]", base.DEC)
+fields.POSITION_TARGET_LOCAL_NED_vy = ProtoField.float("mavlink.position_target_local_ned.vy", "Y velocity [m/s]", base.DEC)
+fields.POSITION_TARGET_LOCAL_NED_vz = ProtoField.float("mavlink.position_target_local_ned.vz", "Z velocity [m/s]", base.DEC)
+fields.POSITION_TARGET_LOCAL_NED_afx = ProtoField.float("mavlink.position_target_local_ned.afx", "X acceleration | force [m/s/s | N]", base.DEC)
+fields.POSITION_TARGET_LOCAL_NED_afy = ProtoField.float("mavlink.position_target_local_ned.afy", "Y acceleration | force [m/s/s | N]", base.DEC)
+fields.POSITION_TARGET_LOCAL_NED_afz = ProtoField.float("mavlink.position_target_local_ned.afz", "Z acceleration | force [m/s/s | N]", base.DEC)
+fields.POSITION_TARGET_LOCAL_NED_yaw = ProtoField.float("mavlink.position_target_local_ned.yaw", "Yaw setpoint [rad]", base.DEC)
+fields.POSITION_TARGET_LOCAL_NED_yaw_rate = ProtoField.float("mavlink.position_target_local_ned.yaw_rate", "Yaw rate setpoint [rad/s]", base.DEC)
 
 -- Fields for message type 93: HIL_ACTUATOR_CONTROLS
 fields.HIL_ACTUATOR_CONTROLS_time_usec = ProtoField.uint64("mavlink.time_usec", "Timestamp [us]", base.DEC)
@@ -1483,6 +1520,25 @@ function payload_fns.payload_11 (buffer, tree, offset, size)
     return offset
 end
 
+-- dissect payload of message type PARAM_REQUEST_READ
+function payload_fns.payload_20 (buffer, tree, offset, size)
+    if (size == 20) then
+        tree:add(fields.PARAM_REQUEST_READ_target_system, buffer(offset, 1))
+        offset = offset + 1
+        tree:add(fields.PARAM_REQUEST_READ_target_component, buffer(offset, 1))
+        offset = offset + 1
+        tree:add(fields.PARAM_REQUEST_READ_param_id, buffer(offset, 16))
+        offset = offset + 16
+        tree:add_le(fields.PARAM_REQUEST_READ_param_index, buffer(offset, 2))
+        offset = offset + 2
+    else
+        tree:add(fields.rawpayload,buffer(offset, size))
+        tree:add_expert_info(PI_MALFORMED, PI_ERROR, "Malformed PARAM_REQUEST_READ message")
+        offset = offset + size
+    end
+    return offset
+end
+
 -- dissect payload of message type PARAM_REQUEST_LIST
 function payload_fns.payload_21(buffer, tree, offset, size)
     if (size == 2) then
@@ -1754,6 +1810,19 @@ function payload_fns.payload_39 (buffer, tree, offset, size)
     else
         tree:add(fields.rawpayload,buffer(offset, size))
         tree:add_expert_info(PI_MALFORMED, PI_ERROR, "Malformed MISSION_ITEM message")
+        offset = offset + size
+    end
+    return offset
+end
+
+-- dissect payload of message type MISSION_CURRENT
+function payload_fns.payload_42 (buffer, tree, offset, size)
+    if (size == 2) then
+        tree:add_le(fields.MISSION_CURRENT_seq, buffer(offset, 2))
+        offset = offset + 2
+    else
+        tree:add(fields.rawpayload,buffer(offset, size))
+        tree:add_expert_info(PI_MALFORMED, PI_ERROR, "Malformed MISSION_CURRENT message")
         offset = offset + size
     end
     return offset
@@ -2095,6 +2164,57 @@ function payload_fns.payload_83 (buffer, tree, offset, size)
     else
         tree:add(fields.rawpayload,buffer(offset, size))
         tree:add_expert_info(PI_MALFORMED, PI_ERROR, "Malformed ATTITUDE_TARGET message")
+        offset = offset + size
+    end
+    return offset
+end
+
+-- dissect payload of message type POSITION_TARGET_LOCAL_NED
+function payload_fns.payload_85 (buffer, tree, offset, size)
+    if (size == 51) then
+        tree:add_le(fields.POSITION_TARGET_LOCAL_NED_time_boot_ms, buffer(offset, 4))
+        offset = offset + 4
+        tree:add_le(fields.POSITION_TARGET_LOCAL_NED_coordinate_frame, buffer(offset, 1))
+        offset = offset + 1
+        local tm = tree:add_le(fields.POSITION_TARGET_LOCAL_NED_type_mask, buffer(offset, 2))
+        tm:add_le(fields.POSITION_TARGET_LOCAL_NED_type_mask_x, buffer(offset, 2))
+        tm:add_le(fields.POSITION_TARGET_LOCAL_NED_type_mask_y, buffer(offset, 2))
+        tm:add_le(fields.POSITION_TARGET_LOCAL_NED_type_mask_z, buffer(offset, 2))
+        tm:add_le(fields.POSITION_TARGET_LOCAL_NED_type_mask_vx, buffer(offset, 2))
+        tm:add_le(fields.POSITION_TARGET_LOCAL_NED_type_mask_vy, buffer(offset, 2))
+        tm:add_le(fields.POSITION_TARGET_LOCAL_NED_type_mask_vz, buffer(offset, 2))
+        tm:add_le(fields.POSITION_TARGET_LOCAL_NED_type_mask_ax, buffer(offset, 2))
+        tm:add_le(fields.POSITION_TARGET_LOCAL_NED_type_mask_ay, buffer(offset, 2))
+        tm:add_le(fields.POSITION_TARGET_LOCAL_NED_type_mask_az, buffer(offset, 2))
+        tm:add_le(fields.POSITION_TARGET_LOCAL_NED_type_mask_fsp, buffer(offset, 2))
+        tm:add_le(fields.POSITION_TARGET_LOCAL_NED_type_mask_yaw, buffer(offset, 2))
+        tm:add_le(fields.POSITION_TARGET_LOCAL_NED_type_mask_yaw_rate, buffer(offset, 2))
+        offset = offset + 2
+        tree:add_le(fields.POSITION_TARGET_LOCAL_NED_x, buffer(offset, 4))
+        offset = offset + 4
+        tree:add_le(fields.POSITION_TARGET_LOCAL_NED_y, buffer(offset, 4))
+        offset = offset + 4
+        tree:add_le(fields.POSITION_TARGET_LOCAL_NED_z, buffer(offset, 4))
+        offset = offset + 4
+        tree:add_le(fields.POSITION_TARGET_LOCAL_NED_vx, buffer(offset, 4))
+        offset = offset + 4
+        tree:add_le(fields.POSITION_TARGET_LOCAL_NED_vy, buffer(offset, 4))
+        offset = offset + 4
+        tree:add_le(fields.POSITION_TARGET_LOCAL_NED_vz, buffer(offset, 4))
+        offset = offset + 4
+        tree:add_le(fields.POSITION_TARGET_LOCAL_NED_afx, buffer(offset, 4))
+        offset = offset + 4
+        tree:add_le(fields.POSITION_TARGET_LOCAL_NED_afy, buffer(offset, 4))
+        offset = offset + 4
+        tree:add_le(fields.POSITION_TARGET_LOCAL_NED_afz, buffer(offset, 4))
+        offset = offset + 4
+        tree:add_le(fields.POSITION_TARGET_LOCAL_NED_yaw, buffer(offset, 4))
+        offset = offset + 4
+        tree:add_le(fields.POSITION_TARGET_LOCAL_NED_yaw_rate, buffer(offset, 4))
+        offset = offset + 4
+    else
+        tree:add(fields.rawpayload,buffer(offset, size))
+        tree:add_expert_info(PI_MALFORMED, PI_ERROR, "Malformed POSITION_TARGET_LOCAL_NED message")
         offset = offset + size
     end
     return offset

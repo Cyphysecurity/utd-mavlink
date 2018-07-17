@@ -2401,10 +2401,16 @@ function payload_fns.payload_113 (buffer, tree, offset, size)
         offset = offset + 8
         tree:add(fields.HIL_GPS_fix_type, buffer(offset, 1))
         offset = offset + 1
-        tree:add_le(fields.HIL_GPS_lat, buffer(offset, 4))
-        offset = offset + 4
-        tree:add_le(fields.HIL_GPS_lon, buffer(offset, 4))
-        offset = offset + 4
+        local lat1 = buffer(offset, 2):int()
+        offset = offset + 2
+        local lat2 = ( buffer(offset, 2):int() * 65536 ) + lat1
+        tree:add_le(fields.HIL_GPS_lat, lat2)
+        offset = offset + 2
+        local lon1 = buffer(offset, 2):int()
+        offset = offset + 2
+        local lon2 = (buffer(offset, 2):int() * 65536 ) + lon1
+        tree:add_le(fields.HIL_GPS_lon, lon2)
+        offset = offset + 2
         tree:add_le(fields.HIL_GPS_alt, buffer(offset, 4))
         offset = offset + 4
         tree:add_le(fields.HIL_GPS_eph, buffer(offset, 2))

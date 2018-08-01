@@ -1313,22 +1313,26 @@ def dissect_111 (buffer):
 def dissect_113 (buffer):
     message = {}
     if len(buffer) == 36:
-        unpacked_data = unpack('<QBhhhhiHHHhhhHB', bytes(buffer))
+        unpacked_data = unpack('<QBBBBBBBBBiHHHhhhHB', bytes(buffer))
         message['time_usec'] = unpacked_data[0]
         message['fix_type'] = unpacked_data[1]
-        lat1 = unpacked_data[2]
-        message['lat'] = unpacked_data[3] * 65536 + lat1
-        lon1 = unpacked_data[4]
-        message['lon'] = unpacked_data[5] * 65536 + lon1
-        message['alt'] = unpacked_data[6]
-        message['eph'] = unpacked_data[7]
-        message['epv'] = unpacked_data[8]
-        message['vel'] = unpacked_data[9]
-        message['vn'] = unpacked_data[10]
-        message['ve'] = unpacked_data[11]
-        message['vd'] = unpacked_data[12]
-        message['cog'] = unpacked_data[13]
-        message['satellites_visible'] = unpacked_data[14]
+        lat = unpacked_data[2:6]
+        lat = [ lat[1], lat[0], lat[3], lat[2] ]
+        lat = unpack('<i', bytes(lat))[0]
+        message['lat'] = lat
+        lon = unpacked_data[6:10]
+        lon = [ lon[1], lon[0], lon[3], lon[2] ]
+        lon = unpack('<i', bytes(lon))[0]
+        message['lon'] = lon
+        message['alt'] = unpacked_data[10]
+        message['eph'] = unpacked_data[11]
+        message['epv'] = unpacked_data[12]
+        message['vel'] = unpacked_data[13]
+        message['vn'] = unpacked_data[14]
+        message['ve'] = unpacked_data[15]
+        message['vd'] = unpacked_data[16]
+        message['cog'] = unpacked_data[17]
+        message['satellites_visible'] = unpacked_data[18]
     else:
         message['error'] = 'Malformed HIL_GPS'
         message['unparseable'] = '0x' + hexlify(buffer).decode('ascii')

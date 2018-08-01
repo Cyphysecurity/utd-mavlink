@@ -2,6 +2,7 @@
 __pycache__
 logs/
 output/
+output2/
 mavlink_stats.py
 mavlink_analysis.py
 mavlinksensordata.py

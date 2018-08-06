@@ -35,7 +35,8 @@ class SimulatorProxy(Thread):
         self.__latitude = None
         self.__longitude = None
         self.__t_gps = False
-    
+        self.__t_gyro = False
+
     def __tamperGPS(self, message: dict) -> bytes :
         c_lat = message['payload']['lat'] + 10**4
         if c_lat > 900000000:
@@ -97,8 +98,73 @@ class SimulatorProxy(Thread):
         data = b'\xfd' + data + pack('<H',crc)
         return data
 
+    def __tamperGyro(self, message: dict) -> bytes:
+        fiu = 0
+        if message['payload']['fields_updated']['time_usec']:
+            fiu += 0x00000001
+        if message['payload']['fields_updated']['xacc']:
+            fiu += 0x00000002
+        if message['payload']['fields_updated']['yacc']:
+            fiu += 0x00000004
+        if message['payload']['fields_updated']['zacc']:
+            fiu += 0x00000008
+        if message['payload']['fields_updated']['xgyro']:
+            fiu += 0x00000010
+        if message['payload']['fields_updated']['ygyro']:
+            fiu += 0x00000020
+        if message['payload']['fields_updated']['zgyro']:
+            fiu += 0x00000040
+        if message['payload']['fields_updated']['xmag']:
+            fiu += 0x00000080
+        if message['payload']['fields_updated']['ymag']:
+            fiu += 0x00000100
+        if message['payload']['fields_updated']['zmag']:
+            fiu += 0x00000200
+        if message['payload']['fields_updated']['abs_pressure']:
+            fiu += 0x00000400
+        if message['payload']['fields_updated']['diff_pressure']:
+            fiu += 0x00000800
+        if message['payload']['fields_updated']['pressure_alt']:
+            fiu += 0x00001000
+        if message['payload']['fields_updated']['temperature']:
+            fiu += 0x00002000
+        if message['payload']['fields_updated']['full_reset']:
+            fiu += 0x80000000
+        data = pack(
+            '<BBBBBBBHQfffffffffffffI',
+            message['length'],
+            message['incompat_flags'],
+            message['compat_flags'],
+            message['sequence'],
+            message['sysid'],
+            message['compid'],
+            107,
+            0,
+            message['payload']['time_usec'],
+            message['payload']['xacc'],
+            message['payload']['yacc'],
+            message['payload']['zacc'],
+            message['payload']['xgyro'] + 0.125,
+            message['payload']['ygyro'],
+            message['payload']['zgyro'],
+            message['payload']['xmag'],
+            message['payload']['ymag'],
+            message['payload']['zmag'],
+            message['payload']['abs_pressure'],
+            message['payload']['diff_pressure'],
+            message['payload']['pressure_alt'],
+            message['payload']['temperature'],
+            fiu
+        )
+        crc = message_crc(data, 107)
+        data = b'\xfd' + data + pack('<H',crc)
+        return data
+
     def toggleTamperGPS(self):
         self.__t_gps = not self.__t_gps
+
+    def toggleTamperGyro(self):
+        self.__t_gyro = not self.__t_gyro
 
     def setFinish(self):
         self.__finish = True
@@ -130,13 +196,22 @@ class SimulatorProxy(Thread):
             buffer = self.__sock.recv(280)
             with quiet_out():
                 message = dissect_mavlink(buffer)[0]
-            if 'id' in message.keys() and message['id'] == 113:
+            if 'id' in message.keys() and message['id'] == 113: # HIL_GPS
                 self.__latitude = float(message['payload']['lat'])/float(10**7)
                 self.__longitude = float(message['payload']['lon'])/float(10**7)
                 if not self.__t_gps:
                     self.__auto.write(buffer)
                 else:
                     payload = self.__tamperGPS(message)
+                    if payload is not None:
+                        self.__auto.write(payload)
+                    else:
+                        self.__auto.write(buffer)
+            elif 'id' in message.keys() and message['id'] == 107: # HIL_SENSOR
+                if not self.__t_gyro:
+                    self.__auto.write(buffer)
+                else:
+                    payload = self.__tamperGyro(message)
                     if payload is not None:
                         self.__auto.write(payload)
                     else:
@@ -202,8 +277,11 @@ class MitmPrompt(Cmd):
         if self.__proxy is not None:
             self.__proxy.printCoord()
     
-    def do_tamper(self, args):
+    def do_tampergps(self, args):
         self.__proxy.toggleTamperGPS()
+    
+    def do_tampergyro(self, args):
+        self.__proxy.toggleTamperGyro()
 
     def do_exit(self, args):
         if self.__proxy is not None:

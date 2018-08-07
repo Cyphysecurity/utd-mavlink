@@ -144,7 +144,7 @@ class SimulatorProxy(Thread):
             message['payload']['xacc'],
             message['payload']['yacc'],
             message['payload']['zacc'],
-            message['payload']['xgyro'] + 0.125,
+            message['payload']['xgyro'] + 0.08,
             message['payload']['ygyro'],
             message['payload']['zgyro'],
             message['payload']['xmag'],
@@ -154,7 +154,7 @@ class SimulatorProxy(Thread):
             message['payload']['diff_pressure'],
             message['payload']['pressure_alt'],
             message['payload']['temperature'],
-            fiu
+            0
         )
         crc = message_crc(data, 107)
         data = b'\xfd' + data + pack('<H',crc)

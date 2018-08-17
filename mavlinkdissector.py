@@ -1317,11 +1317,11 @@ def dissect_113 (buffer):
         message['time_usec'] = unpacked_data[0]
         message['fix_type'] = unpacked_data[1]
         lat = unpacked_data[2:6]
-        lat = [ lat[1], lat[0], lat[3], lat[2] ]
+        lat = [ lat[3], lat[0], lat[1], lat[2] ]
         lat = unpack('<i', bytes(lat))[0]
         message['lat'] = lat
         lon = unpacked_data[6:10]
-        lon = [ lon[1], lon[0], lon[3], lon[2] ]
+        lon = [ lon[3], lon[0], lon[1], lon[2] ]
         lon = unpack('<i', bytes(lon))[0]
         message['lon'] = lon
         message['alt'] = unpacked_data[10]

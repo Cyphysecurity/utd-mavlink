@@ -36,9 +36,10 @@ class SimulatorProxy(Thread):
         self.__longitude = None
         self.__t_gps = False
         self.__t_gyro = False
+        self.__gyro_counter = 0
 
     def __tamperGPS(self, message: dict) -> bytes :
-        c_lat = message['payload']['lat'] + 10**4
+        c_lat = message['payload']['lat'] + 5000
         if c_lat > 900000000:
             c_lat = -899999999
         lat = [
@@ -47,7 +48,7 @@ class SimulatorProxy(Thread):
             int(( c_lat & 0x0000ff00 ) / 0x100),
             int(c_lat & 0x000000ff)
         ]
-        c_lon = message['payload']['lon'] + 10**4
+        c_lon = message['payload']['lon'] + 5000
         print(
             'TAMPER:\tLAT {0:d}\tLON {1:d} -> LAT {2:d}\tLON {3:d}'.format(
                 message['payload']['lat'],
@@ -77,13 +78,13 @@ class SimulatorProxy(Thread):
             message['payload']['time_usec'],
             message['payload']['fix_type'],
             lat[2],
-            lat[3],
-            lat[0],
             lat[1],
+            lat[0],
+            lat[3],
             lon[2],
-            lon[3],
-            lon[0],
             lon[1],
+            lon[0],
+            lon[3],
             message['payload']['alt'],
             message['payload']['eph'],
             message['payload']['epv'],
@@ -144,7 +145,7 @@ class SimulatorProxy(Thread):
             message['payload']['xacc'],
             message['payload']['yacc'],
             message['payload']['zacc'],
-            message['payload']['xgyro'] + 0.08,
+            message['payload']['xgyro'] + 0.1,
             message['payload']['ygyro'],
             message['payload']['zgyro'],
             message['payload']['xmag'],
@@ -211,11 +212,19 @@ class SimulatorProxy(Thread):
                 if not self.__t_gyro:
                     self.__auto.write(buffer)
                 else:
-                    payload = self.__tamperGyro(message)
-                    if payload is not None:
-                        self.__auto.write(payload)
-                    else:
+                    self.__gyro_counter -= 1
+                    if self.__gyro_counter < 0:
+                        self.__gyro_counter = 1000
                         self.__auto.write(buffer)
+                    elif self.__gyro_counter == 0:
+                        self.__t_gyro = False
+                        self.__auto.write(buffer)
+                    else:
+                        payload = self.__tamperGyro(message)
+                        if payload is not None:
+                            self.__auto.write(payload)
+                        else:
+                            self.__auto.write(buffer)
             else:
                 self.__auto.write(buffer)
         #self.__sock.close()

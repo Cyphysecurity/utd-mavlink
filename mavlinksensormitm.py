@@ -9,6 +9,7 @@ from struct import pack, unpack
 from contextlib import contextmanager
 from cmd import Cmd
 from mavlinkdissector import message_crc, dissect_mavlink
+from copy import deepcopy
 
 @contextmanager
 def quiet_out():
@@ -37,6 +38,7 @@ class SimulatorProxy(Thread):
         self.__t_gps = False
         self.__t_gyro = False
         self.__gyro_counter = 0
+        self.__gps_buffer = []
 
     def __tamperGPS(self, message: dict) -> bytes :
         c_lat = message['payload']['lat'] + 5000
@@ -49,14 +51,14 @@ class SimulatorProxy(Thread):
             int(c_lat & 0x000000ff)
         ]
         c_lon = message['payload']['lon'] + 5000
-        print(
-            'TAMPER:\tLAT {0:d}\tLON {1:d} -> LAT {2:d}\tLON {3:d}'.format(
-                message['payload']['lat'],
-                message['payload']['lon'],
-                c_lat,
-                c_lon
-            )
-        )
+        # print(
+        #     'TAMPER:\tLAT {0:d}\tLON {1:d} -> LAT {2:d}\tLON {3:d}'.format(
+        #         message['payload']['lat'],
+        #         message['payload']['lon'],
+        #         c_lat,
+        #         c_lon
+        #     )
+        # )
         if c_lon > 1800000000:
             c_lon = -1799999999
         lon = [
@@ -97,6 +99,14 @@ class SimulatorProxy(Thread):
         )
         crc = message_crc(data, 113)
         data = b'\xfd' + data + pack('<H',crc)
+        self.__gps_buffer.append(
+            (
+                float(message['payload']['lat'])/float(10**7),
+                float(message['payload']['lon'])/float(10**7),
+                float(c_lat)/float(10**7),
+                float(c_lon)/float(10**7)
+            )
+        )
         return data
 
     def __tamperGyro(self, message: dict) -> bytes:
@@ -161,6 +171,11 @@ class SimulatorProxy(Thread):
         data = b'\xfd' + data + pack('<H',crc)
         return data
 
+    def getGPSBuffer(self) -> list:
+        retval = deepcopy(self.__gps_buffer)
+        self.__gps_buffer.clear()
+        return retval
+
     def toggleTamperGPS(self):
         self.__t_gps = not self.__t_gps
 
@@ -169,6 +184,9 @@ class SimulatorProxy(Thread):
 
     def setFinish(self):
         self.__finish = True
+
+    def isonline(self):
+        return not self.__finish
 
     def printCoord(self):
         msg = 'Current GPS:\tLAT {0:f}\tLON {1:f}'.format(self.__latitude, self.__longitude)
@@ -194,40 +212,45 @@ class SimulatorProxy(Thread):
         self.__auto.write(data)
         self.__auto.start()
         while not self.__finish:
-            buffer = self.__sock.recv(280)
-            with quiet_out():
-                message = dissect_mavlink(buffer)[0]
-            if 'id' in message.keys() and message['id'] == 113: # HIL_GPS
-                self.__latitude = float(message['payload']['lat'])/float(10**7)
-                self.__longitude = float(message['payload']['lon'])/float(10**7)
-                if not self.__t_gps:
-                    self.__auto.write(buffer)
-                else:
-                    payload = self.__tamperGPS(message)
-                    if payload is not None:
-                        self.__auto.write(payload)
-                    else:
-                        self.__auto.write(buffer)
-            elif 'id' in message.keys() and message['id'] == 107: # HIL_SENSOR
-                if not self.__t_gyro:
-                    self.__auto.write(buffer)
-                else:
-                    self.__gyro_counter -= 1
-                    if self.__gyro_counter < 0:
-                        self.__gyro_counter = 1000
-                        self.__auto.write(buffer)
-                    elif self.__gyro_counter == 0:
-                        self.__t_gyro = False
+            try:
+                buffer = self.__sock.recv(280)
+                with quiet_out():
+                    message = dissect_mavlink(buffer)[0]
+                if 'id' in message.keys() and message['id'] == 113: # HIL_GPS
+                    self.__latitude = float(message['payload']['lat'])/float(10**7)
+                    self.__longitude = float(message['payload']['lon'])/float(10**7)
+                    if not self.__t_gps:
+                        self.__gps_buffer.append(
+                            (float(self.__latitude),float(self.__longitude),float(self.__latitude),float(self.__longitude))
+                        )
                         self.__auto.write(buffer)
                     else:
-                        payload = self.__tamperGyro(message)
+                        payload = self.__tamperGPS(message)
                         if payload is not None:
                             self.__auto.write(payload)
                         else:
                             self.__auto.write(buffer)
-            else:
-                self.__auto.write(buffer)
-        #self.__sock.close()
+                elif 'id' in message.keys() and message['id'] == 107: # HIL_SENSOR
+                    if not self.__t_gyro:
+                        self.__auto.write(buffer)
+                    else:
+                        self.__gyro_counter -= 1
+                        if self.__gyro_counter < 0:
+                            self.__gyro_counter = 1000
+                            self.__auto.write(buffer)
+                        elif self.__gyro_counter == 0:
+                            self.__t_gyro = False
+                            self.__auto.write(buffer)
+                        else:
+                            payload = self.__tamperGyro(message)
+                            if payload is not None:
+                                self.__auto.write(payload)
+                            else:
+                                self.__auto.write(buffer)
+                else:
+                    self.__auto.write(buffer)
+            except ConnectionResetError:
+                self.__finish = True
         self.__sock = None
         self.__auto.setFinish()
         self.__auto.join()
@@ -242,6 +265,7 @@ class AutopilotProxy(Thread):
         self.__parent = parent
         self.__finish = False
         self.__sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        self.__sock.bind(('0.0.0.0', 14444))
     
     def setFinish(self):
         self.__finish = True
@@ -255,9 +279,11 @@ class AutopilotProxy(Thread):
     
     def run(self):
         while not self.__finish:
-            buffer = self.__sock.recv(280)
-            self.__parent.recv(buffer)
-        #self.__sock.close()
+            try:
+                buffer = self.__sock.recv(280)
+                self.__parent.recv(buffer)
+            except ConnectionResetError:
+                self.__finish = True
         self.__sock = None
 
 class MitmPrompt(Cmd):
